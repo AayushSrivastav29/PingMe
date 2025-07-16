@@ -1,5 +1,13 @@
 const Users = require("../models/userModel");
 const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
+
+const secretKey = process.env.SECRET_KEY;
+
+const generateAccessToken = (id) => {
+  return jwt.sign({ UserId: id }, secretKey);
+};
+
 
 const addUser = async (req, res) => {
   try {
@@ -57,6 +65,7 @@ const findUser = async (req, res) => {
         return res.status(200).json({
           success: true,
           message: "User logged in",
+            token: generateAccessToken(user.id),
           user: user,
         });
       }

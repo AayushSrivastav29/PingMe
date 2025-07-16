@@ -24,11 +24,11 @@ async function handleFormSubmit(event) {
   try {
     const res = await axios.post(`http://localhost:3000/api/user/find`, userDetails);
     console.log(res);
-    message.textContent = res.data.message;
-    message.style.color = "green";
+     message.textContent = res.data.message;
+     message.style.color = "green";
   } catch (error) {
     console.log(error);
-    message.textContent = error.response.data.message;
-    message.style.color = "red";
+     message.textContent = error.response.data.message;
+     message.style.color = "red";
   }
 }
