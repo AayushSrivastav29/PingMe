@@ -1,12 +1,4 @@
-/**
- * Deliverables:
-
-    Make the frontend for the login page.
-    Once the user clicks on the submit button take the object and call the corresponding backend api (which you are about to create).
-    Also show a button at the botton for signup for (new users)like the way it is in the app.
-
- */
-
+let path='http://localhost:3000';
 
 document.querySelector("form").addEventListener("submit", handleFormSubmit);
 
@@ -22,10 +14,13 @@ async function handleFormSubmit(event) {
   const message = document.querySelector("#message");
 
   try {
-    const res = await axios.post(`http://localhost:3000/api/user/find`, userDetails);
+    const res = await axios.post(`${path}/api/user/find`, userDetails);
     console.log(res);
      message.textContent = res.data.message;
      message.style.color = "green";
+     localStorage.setItem('token', res.data.token);
+      localStorage.setItem('name', res.data.name);
+     window.location.href= '/view/home.html';
   } catch (error) {
     console.log(error);
      message.textContent = error.response.data.message;

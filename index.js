@@ -5,7 +5,7 @@ const cors = require("cors");
 const path = require("path");
 
 //import modules
-require("./models/userModel");
+require("./models");
 
 //import routes
 const userRoute = require("./routes/userRoute");

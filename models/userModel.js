@@ -28,6 +28,10 @@ const Users = sequelize.define("Users", {
     type: DataTypes.BIGINT,
     allowNull: false,    
   },
+  isOnline:{
+    type: DataTypes.BOOLEAN,
+    defaultValue:false
+  }
   
 });
 

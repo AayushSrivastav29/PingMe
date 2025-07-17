@@ -1,6 +1,6 @@
 const Users = require("../models/userModel");
 const bcrypt = require("bcrypt");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const secretKey = process.env.SECRET_KEY;
 
@@ -8,6 +8,16 @@ const generateAccessToken = (id) => {
   return jwt.sign({ UserId: id }, secretKey);
 };
 
+const logoutUser = async (req, res) => {
+  try {
+    const id = req.user.id;
+    await Users.update({ isOnline: false }, { where: { id: id } });
+    res.status(200).json({ message: "user logged out", success: true });
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({ message: "Error in logging out", success: false });
+  }
+};
 
 const addUser = async (req, res) => {
   try {
@@ -29,16 +39,23 @@ const addUser = async (req, res) => {
       if (err) {
         return console.log("Error in hashing password", err);
       }
-      await Users.create({
+      const user = await Users.create({
         name,
         email,
         phone,
         password: hash,
+        isOnline: true,
       });
+
+      res
+        .status(201)
+        .json({
+          message: `user signed up successfully`,
+          token: generateAccessToken(user.id),
+          name: name,
+          success: true,
+        });
     });
-    res
-      .status(201)
-      .json({ message: `user signed up successfully`, success: true });
   } catch (error) {
     console.log("Error in creating user", error.message);
     res.status(500).json({ message: "Error in creating user", success: false });
@@ -56,27 +73,51 @@ const findUser = async (req, res) => {
     });
 
     //compare password
-    bcrypt.compare(password, user.password, (err, result) => {
+    bcrypt.compare(password, user.password, async (err, result) => {
       if (err) {
-        return res.status(500).json({message:"Error comparing passwords", success: false});
+        return res
+          .status(500)
+          .json({ message: "Error comparing passwords", success: false });
       } else if (!result) {
-        return res.status(401).json({message:"Password incorrect", success: false});
+        return res
+          .status(401)
+          .json({ message: "Password incorrect", success: false });
       } else {
+        //update online status
+        await user.update({ isOnline: true });
+
         return res.status(200).json({
           success: true,
           message: "User logged in",
-            token: generateAccessToken(user.id),
-          user: user,
+          token: generateAccessToken(user.id),
+          name: user.name,
         });
       }
     });
-
   } catch (error) {
     res.status(404).json({ message: "User not found", success: false });
   }
 };
 
+const checkOnlineUsers = async (req, res) => {
+  try {
+    const users = await Users.findAll({
+      where: {
+        isOnline: true,
+      }
+    });
+    res.status(200).send(users);
+  } catch (error) {
+    console.log(error);
+    res
+      .status(404)
+      .json({ message: "Error in getting online users", success: false });
+  }
+};
+
 module.exports = {
   addUser,
-  findUser
+  findUser,
+  checkOnlineUsers,
+  logoutUser,
 };
