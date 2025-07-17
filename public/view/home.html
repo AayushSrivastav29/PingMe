@@ -4,18 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PingMe</title>
+    <link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
-    <h1>Group chat</h1>
-    <p><button id="logout">logout</button></p>
-    <div>
-        <ul></ul>
-    </div>
-    <div>
-        <input type="text" id="send-message" placeholder="send message">
-        <button id>send</button>
+    <h1>Group Chat</h1>
+    <button id="logout">Logout</button>
+    <div id="chat-container">
+        <ul id="chat-messages"></ul> 
+        <div id="message-input">
+            <input type="text" id="send-message" placeholder="Type a message...">
+            <button id="send-button">Send</button>
+        </div>
     </div>
 </body>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
 <script src="/js/home.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </html>

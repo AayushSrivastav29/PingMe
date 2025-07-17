@@ -11,7 +11,13 @@ const generateAccessToken = (id) => {
 const logoutUser = async (req, res) => {
   try {
     const id = req.user.id;
-    await Users.update({ isOnline: false }, { where: { id: id } });
+    const user = await Users.findByPk(id);
+    await user.update({ isOnline: false });
+    // Broadcast user-left event
+    if (req.app.get("socketio")) {
+      req.app.get("socketio").emit("user-left", { name: user.name });
+    }
+
     res.status(200).json({ message: "user logged out", success: true });
   } catch (error) {
     console.log(error);
@@ -47,14 +53,11 @@ const addUser = async (req, res) => {
         isOnline: true,
       });
 
-      res
-        .status(201)
-        .json({
-          message: `user signed up successfully`,
-          token: generateAccessToken(user.id),
-          name: name,
-          success: true,
-        });
+      res.status(201).json({
+        message: `user signed up successfully`,
+        name: name,
+        success: true,
+      });
     });
   } catch (error) {
     console.log("Error in creating user", error.message);
@@ -85,12 +88,16 @@ const findUser = async (req, res) => {
       } else {
         //update online status
         await user.update({ isOnline: true });
+        if (req.app.get("socketio")) {
+          req.app.get("socketio").emit("user-online", user.id);
+        }
 
         return res.status(200).json({
           success: true,
           message: "User logged in",
           token: generateAccessToken(user.id),
           name: user.name,
+          userId: user.id, // for socket io
         });
       }
     });
@@ -104,7 +111,7 @@ const checkOnlineUsers = async (req, res) => {
     const users = await Users.findAll({
       where: {
         isOnline: true,
-      }
+      },
     });
     res.status(200).send(users);
   } catch (error) {
