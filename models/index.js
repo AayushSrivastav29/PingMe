@@ -7,8 +7,8 @@ Users.hasMany(Messages, { foreignKey: 'senderId' });
 Messages.belongsTo(Users, { foreignKey: 'senderId' });
 
 //one to many
-Group.hasMany(Messages);
-Messages.belongsTo(Group);
+Group.hasMany(Messages,  { foreignKey: 'groupId' });
+Messages.belongsTo(Group,  { foreignKey: 'groupId' });
 
 
 module.exports={

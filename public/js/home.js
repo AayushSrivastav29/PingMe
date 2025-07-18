@@ -1,15 +1,17 @@
 let token;
 let path = "http://localhost:3000";
 let username;
+let userId;
+let currentGroupId = null;
 document.addEventListener("DOMContentLoaded", initialize);
 
-function initialize() {
+async function initialize() {
   token = localStorage.getItem("token");
   //add name
   username = localStorage.getItem("name");
   document.querySelector("#user-name").textContent = username;
 
-  const userId = localStorage.getItem("userId");
+  userId = localStorage.getItem("userId");
 
   // Setup WebSocket (Socket.io)
   const socket = io("http://localhost:3000");
@@ -19,7 +21,9 @@ function initialize() {
 
   // Listen for new messages
   socket.on("new-message", (data) => {
-    addMessageToUI(data.sender, data.text);
+    if (data.groupId === currentGroupId) {
+      addMessageToUI(data.sender, data.text);
+    }
   });
 
   // Listen for new users joining
@@ -46,6 +50,9 @@ function initialize() {
     ul.appendChild(li);
   });
 
+  //show groups
+  await showGroups();
+
   //show contacts
   showContacts();
 
@@ -53,12 +60,41 @@ function initialize() {
   document.querySelector("#send-button").addEventListener("click", sendMessage);
   document
     .querySelector("#create-group-btn")
-    .addEventListener("click", createGroup);
+    .addEventListener("click", displayCreateGroup);
+
+  document
+    .querySelector("#dashboard")
+    .addEventListener("click", handleGroupClick);
+}
+
+function showDashboard() {
+  const ul = document.querySelector("#dashboard");
+  ul.innerHTML = "";
+  showGroups();
+  showContacts();
+}
+async function showGroups() {
+  const ul = document.querySelector("#dashboard");
+  ul.innerHTML = "";
+  try {
+    const result = await axios.get(`${path}/api/group/find/${userId}`);
+    const groupsList = result.data.groups;
+    console.log(result);
+    groupsList.forEach((group) => {
+      const li = document.createElement("li");
+      li.textContent = group.groupName;
+      li.dataset.groupId = group.id;
+      ul.appendChild(li);
+    });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function showContacts() {
   const ul = document.querySelector("#dashboard");
   try {
+    //show contacts
     const result = await axios.get(`${path}/api/user/`);
     console.log(result.data);
     const contactsList = result.data;
@@ -102,17 +138,17 @@ async function sendMessage() {
   const input = document.querySelector("#send-message");
   const text = input.value.trim();
 
-  if (!text) return;
+  if (!text || !currentGroupId) return;
 
   try {
     await axios.post(
       `${path}/api/message/send`,
-      { text },
+      { text, groupId: currentGroupId },
       {
         headers: { Authorization: token },
       }
     );
-    input.value = ""; // Clear input
+    input.value = "";
   } catch (error) {
     console.log(error);
   }
@@ -160,7 +196,7 @@ async function onlineUsersHandler() {
   }
 }
 
-async function createGroup() {
+async function displayCreateGroup() {
   const createGroupDiv = document.querySelector("#create-group");
   //open
   createGroupDiv.style.display = "flex";
@@ -168,12 +204,16 @@ async function createGroup() {
   const result = await axios.get(`${path}/api/user/`);
   const contactsList = result.data;
   const chooseContacts = document.querySelector("#choose-contacts");
-
+  let homeUserId;
   contactsList.forEach((ele) => {
+    if (ele.name === username) {
+      homeUserId = ele.id;
+    }
     if (ele.name != username) {
       const wrapper = document.createElement("div");
       wrapper.classList.add("contact-wrapper");
       const checkbox = document.createElement("input");
+      checkbox.classList.add("checkbox");
       checkbox.type = "checkbox";
       checkbox.value = ele.name;
       checkbox.id = `user-${ele.id}`;
@@ -193,5 +233,9 @@ async function createGroup() {
     // Remove old contact wrappers only
     const oldWrappers = chooseContacts.querySelectorAll(".contact-wrapper");
     oldWrappers.forEach((wrapper) => wrapper.remove());
+  });
+
+  document.querySelector("#save-group").addEventListener("click", function (e) {
+    createGroup(e, homeUserId);
   });
 }

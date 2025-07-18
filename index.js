@@ -14,6 +14,7 @@ const { Users } = require("./models");
 //import routes
 const userRoute = require("./routes/userRoute");
 const messageRoute = require("./routes/messageRoute");
+const groupRoute = require("./routes/groupRoute");
 
 
 const app = express();
@@ -50,6 +51,7 @@ io.on('connection', (socket) => {
 
 app.use("/api/user", userRoute);
 app.use("/api/message", messageRoute);
+app.use("/api/group", groupRoute);
 
 
 app.get("/", (req, res) => {

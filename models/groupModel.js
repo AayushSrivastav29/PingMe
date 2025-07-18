@@ -12,9 +12,17 @@ const Group = sequelize.define('Group', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  members:{
-    type:DataTypes.ARRAY
+  members: {
+  type: DataTypes.TEXT,
+  allowNull: true,
+  get() {
+    const rawValue = this.getDataValue('members');
+    return rawValue ? JSON.parse(rawValue) : [];
+  },
+  set(val) {
+    this.setDataValue('members', JSON.stringify(val));
   }
+}
 });
 
-module.exports= Group;
+module.exports= Group; 

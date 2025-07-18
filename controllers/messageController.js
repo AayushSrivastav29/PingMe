@@ -4,16 +4,16 @@ const  Messages  = require("../models/messageModel");
 
 const sendMessage = async (req, res) => {
   try {
-    const { text } = req.body;
-    const senderId = req.user.id; // From JWT auth
+    const { text, groupId } = req.body; 
+    const senderId = req.user.id;
+    const message = await Messages.create({ text, senderId, groupId }); 
 
-    const message = await Messages.create({ text, senderId });
-
-    // Emit real-time event (if using WebSockets)
+    // Emit real-time event with groupId
     if (req.app.get('socketio')) {
       req.app.get('socketio').emit('new-message', {
         text,
         sender: req.user.name,
+        groupId 
       });
     }
 
@@ -37,7 +37,24 @@ const getMessages = async (req, res) => {
   }
 };
 
+
+const getGroupMessages = async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    const messages = await Messages.findAll({
+      where: { groupId },
+      include: [{ model: Users, attributes: ['name'] }],
+      order: [['createdAt', 'ASC']],
+    });
+    res.status(200).json(messages);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Failed to fetch group messages" });
+  }
+};
+
 module.exports={
     sendMessage,
-    getMessages
+    getMessages,
+    getGroupMessages
 }
