@@ -35,20 +35,6 @@ async function initialize() {
     console.log(onlineUsersArr);
   });
 
-  // Listen for new users joining
-  // socket.on("user-joined", (obj) => {
-  //   const ul = document.querySelector("#user-online");
-  //   ul.innerHTML = "";
-  //   console.log(obj);
-  //   const arr = obj.data;
-  //   arr.forEach((user) => {
-  //     const li = document.createElement("li");
-  //     li.className = "online"; // Apply CSS class for notifications
-  //     li.textContent = `${user.name} online`;
-  //     ul.appendChild(li);
-  //   });
-  // });
-
   //get online users
   onlineUsersHandler();
 
@@ -78,6 +64,7 @@ async function initialize() {
   document
     .querySelector("#dashboard")
     .addEventListener("click", handleGroupClick);
+  document.querySelector("#edit-group-btn").addEventListener("click", openAdminModal);
 }
 
 function showDashboard() {

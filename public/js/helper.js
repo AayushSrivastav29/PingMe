@@ -18,10 +18,16 @@ async function createGroup(e, homeUserId) {
     console.log(groupName);
     console.log(membersList);
 
-    const result = await axios.post(`${path}/api/group/create`, {
-      groupName,
-      membersList,
-    });
+    const result = await axios.post(
+      `${path}/api/group/create`,
+      {
+        groupName,
+        membersList,
+      },
+      {
+        headers: { Authorization: token },
+      }
+    );
 
     const p = document.createElement("p");
     p.textContent = result.data.message;
@@ -48,6 +54,7 @@ async function updateOnlineList(groupId) {
         const li = document.createElement("li");
         li.className = "online";
         li.textContent = `${user.name} online`;
+        li.style.color = "green";
         ul.appendChild(li);
       });
   } catch (error) {
@@ -70,7 +77,22 @@ async function handleGroupClick(event) {
     document.querySelector("#group-name-header").textContent = groupName;
 
     updateOnlineList(groupId);
-    
+
+    // Check if current user is admin
+    try {
+      const groupResponse = await axios.get(
+        `${path}/api/group/find-group/${groupId}`
+      );
+      const isAdmin = groupResponse.data.admin.includes(parseInt(userId));
+
+      // Show edit button if admin
+      document.querySelector("#edit-group-btn").style.display = isAdmin
+        ? "block"
+        : "none";
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+    }
+
     // Load group messages
     loadGroupMessages(groupId);
   }
@@ -92,5 +114,176 @@ async function loadGroupMessages(groupId) {
     });
   } catch (error) {
     console.log(error);
+  }
+}
+
+// Open admin management modal
+async function openAdminModal() {
+  const modal = document.querySelector("#admin-modal");
+  modal.style.display = "flex";
+
+  try {
+    // Load group members
+    const groupResponse = await axios.get(
+      `${path}/api/group/find-group/${currentGroupId}`
+    );
+    const memberIds = groupResponse.data.members;
+
+    // Get all users
+    const usersResponse = await axios.get(`${path}/api/user/`);
+
+    // Populate member list
+    const memberList = document.querySelector("#member-list");
+    memberList.innerHTML = "";
+
+    memberIds.forEach((memberId) => {
+      const user = usersResponse.data.find((u) => u.id === memberId);
+      if (user) {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${user.name} 
+          ${
+            groupResponse.data.admin.includes(memberId)
+              ? '<span class="admin-badge">Admin</span>'
+              : ""
+          }
+          <button class="remove-member-btn" data-id="${memberId}">Remove</button>
+          ${
+            groupResponse.data.admin.includes(memberId)
+              ? `<button class="remove-admin-btn" data-id="${memberId}">Remove Admin</button>`
+              : `<button class="make-admin-btn" data-id="${memberId}">Make Admin</button>`
+          }
+        `;
+        memberList.appendChild(li);
+      }
+      //close it
+      document
+        .querySelectorAll(".close-btn")[1]
+        .addEventListener("click", () => {
+          modal.style.display = "none";
+        });
+    });
+
+    // Populate add member dropdown
+    const addMemberSelect = document.querySelector("#add-member-select");
+    addMemberSelect.innerHTML = '<option value="">Select a user</option>';
+
+    usersResponse.data.forEach((user) => {
+      if (!memberIds.includes(user.id)) {
+        const option = document.createElement("option");
+        option.value = user.id;
+        option.textContent = user.name;
+        addMemberSelect.appendChild(option);
+      }
+    });
+
+    // Add event listeners
+    document.querySelectorAll(".remove-member-btn").forEach((btn) => {
+      btn.addEventListener("click", removeMember);
+    });
+
+    document.querySelectorAll(".make-admin-btn").forEach((btn) => {
+      btn.addEventListener("click", makeAdmin);
+    });
+
+    document.querySelectorAll(".remove-admin-btn").forEach((btn) => {
+      btn.addEventListener("click", removeAdmin);
+    });
+
+    document
+      .querySelector("#add-member-btn")
+      .addEventListener("click", addMember);
+  } catch (error) {
+    console.error("Error loading admin modal:", error);
+  }
+}
+
+// Admin actions
+async function removeMember(event) {
+  let userId = event.target.dataset.id;
+    userId = parseInt(userId);
+
+  try {
+    await axios.post(
+      `${path}/api/group/remove-member`,
+      {
+        groupId: currentGroupId,
+        userId,
+      },
+      {
+        headers: { Authorization: token },
+      }
+    );
+
+    openAdminModal(); // Refresh modal
+  } catch (error) {
+    console.error("Error removing member:", error);
+  }
+}
+
+async function makeAdmin(event) {
+  let userId = event.target.dataset.id;
+    userId = parseInt(userId);
+  try {
+    await axios.post(
+      `${path}/api/group/make-admin`,
+      {
+        groupId: currentGroupId,
+        userId,
+      },
+      {
+        headers: { Authorization: token },
+      }
+    );
+
+    openAdminModal(); // Refresh modal
+  } catch (error) {
+    console.error("Error making admin:", error);
+  }
+}
+
+async function removeAdmin(event) {
+  let userId = event.target.dataset.id;
+    userId = parseInt(userId);
+
+  try {
+    await axios.post(
+      `${path}/api/group/remove-admin`,
+      {
+        groupId: currentGroupId,
+        userId,
+      },
+      {
+        headers: { Authorization: token },
+      }
+    );
+
+    openAdminModal(); // Refresh modal
+  } catch (error) {
+    console.error("Error removing admin:", error);
+  }
+}
+
+async function addMember() {
+  const select = document.querySelector("#add-member-select");
+  let userId = select.value;
+    userId= parseInt(userId);
+  if (!userId) return;
+
+  try {
+    await axios.post(
+      `${path}/api/group/add-member`,
+      {
+        groupId: currentGroupId,
+        userId,
+      },
+      {
+        headers: { Authorization: token },
+      }
+    );
+
+    openAdminModal(); // Refresh modal
+  } catch (error) {
+    console.error("Error adding member:", error);
   }
 }

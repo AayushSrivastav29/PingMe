@@ -259,3 +259,40 @@ body {
     height: 100%;
   }
 }
+
+/* Group header */
+#group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #3498db;
+  color: white;
+}
+
+/* Admin badge */
+.admin-badge {
+  background-color: #f39c12;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  margin-left: 5px;
+}
+
+/* Member list in admin modal */
+#member-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Section in admin modal */
+.section {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
