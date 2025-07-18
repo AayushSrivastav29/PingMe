@@ -8,6 +8,16 @@ const generateAccessToken = (id) => {
   return jwt.sign({ UserId: id }, secretKey);
 };
 
+const getAllUsers = async (req,res) => {
+   try {
+    const users = await Users.findAll();
+    res.status(200).send(users);
+   } catch (error) {
+    console.log(error.message);
+    res.status(404).send("error in getting all users");
+   }
+}
+
 const logoutUser = async (req, res) => {
   try {
     const id = req.user.id;
@@ -123,6 +133,7 @@ const checkOnlineUsers = async (req, res) => {
 };
 
 module.exports = {
+  getAllUsers,
   addUser,
   findUser,
   checkOnlineUsers,

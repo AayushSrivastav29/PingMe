@@ -5,7 +5,10 @@ document.addEventListener("DOMContentLoaded", initialize);
 
 function initialize() {
   token = localStorage.getItem("token");
+  //add name
   username = localStorage.getItem("name");
+  document.querySelector("#user-name").textContent = username;
+
   const userId = localStorage.getItem("userId");
 
   // Setup WebSocket (Socket.io)
@@ -43,8 +46,35 @@ function initialize() {
     ul.appendChild(li);
   });
 
+  //show contacts
+  showContacts();
+
   // Send message on button click
   document.querySelector("#send-button").addEventListener("click", sendMessage);
+  document
+    .querySelector("#create-group-btn")
+    .addEventListener("click", createGroup);
+}
+
+async function showContacts() {
+  const ul = document.querySelector("#dashboard");
+  try {
+    const result = await axios.get(`${path}/api/user/`);
+    console.log(result.data);
+    const contactsList = result.data;
+    contactsList.forEach((ele) => {
+      if (ele.name != username) {
+        const li = document.createElement("li");
+        li.textContent = `${ele.name}`;
+        ul.appendChild(li);
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    const li = document.createElement("li");
+    li.textContent = `Error in fetching all contacts`;
+    ul.appendChild(li);
+  }
 }
 
 async function loadMessages() {
@@ -62,7 +92,7 @@ async function loadMessages() {
 }
 
 function addMessageToUI(sender, text) {
-  const ul = document.querySelector("ul");
+  const ul = document.querySelector("#chat-messages");
   const li = document.createElement("li");
   li.textContent = `${sender}: ${text}`;
   ul.appendChild(li);
@@ -104,43 +134,20 @@ document.querySelector("#logout").addEventListener("click", async () => {
   }
 });
 
-// async function onlineUsersHandler() {
-//   try {
-//     const onlineUsers = await axios.get(`${path}/api/user/online`);
-//     console.log(onlineUsers.data);
-//     const onlineUsersList = onlineUsers.data;
-//     const ul = document.querySelector("ul");
-//     //listing online users
-//     for (let i = 0; i < onlineUsersList.length; i++) {
-//       let ele = onlineUsersList[i];
-//       if (ele.name != username) {
-//         const li = document.createElement("li");
-//         li.textContent = `${ele.name} joined`;
-//         if (i % 2 == 0) {
-//           li.style.backgroundColor = "lightgrey";
-//         }
-//         ul.appendChild(li);
-//       }
-//     }
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
-
 async function onlineUsersHandler() {
   try {
     const ul = document.querySelector("#chat-messages");
     const onlineUsers = await axios.get(`${path}/api/user/online`);
     const onlineUsersList = onlineUsers.data;
-    
+
     // Add current user
     const youLi = document.createElement("li");
     youLi.className = "joined";
     youLi.textContent = "You joined";
     ul.appendChild(youLi);
-    
+
     // Add other users
-    onlineUsersList.forEach(user => {
+    onlineUsersList.forEach((user) => {
       if (user.name !== username) {
         const li = document.createElement("li");
         li.className = "joined";
@@ -151,4 +158,40 @@ async function onlineUsersHandler() {
   } catch (error) {
     console.log(error);
   }
+}
+
+async function createGroup() {
+  const createGroupDiv = document.querySelector("#create-group");
+  //open
+  createGroupDiv.style.display = "flex";
+  //show contacts to add
+  const result = await axios.get(`${path}/api/user/`);
+  const contactsList = result.data;
+  const chooseContacts = document.querySelector("#choose-contacts");
+
+  contactsList.forEach((ele) => {
+    if (ele.name != username) {
+      const wrapper = document.createElement("div");
+      wrapper.classList.add("contact-wrapper");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = ele.name;
+      checkbox.id = `user-${ele.id}`;
+
+      const label = document.createElement("label");
+      label.setAttribute("for", `user-${ele.id}`);
+      label.textContent = ele.name;
+
+      wrapper.appendChild(checkbox);
+      wrapper.appendChild(label);
+      chooseContacts.appendChild(wrapper);
+    }
+  });
+  //close
+  document.querySelector(".close-btn").addEventListener("click", () => {
+    createGroupDiv.style.display = "none";
+    // Remove old contact wrappers only
+    const oldWrappers = chooseContacts.querySelectorAll(".contact-wrapper");
+    oldWrappers.forEach((wrapper) => wrapper.remove());
+  });
 }
