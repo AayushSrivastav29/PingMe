@@ -35,9 +35,13 @@ io.on('connection', (socket) => {
   // Listen for a new user going online
   socket.on('user-online', async (userId) => {
     try {
-      const user = await Users.findByPk(userId);
-      if (user) {
-        io.emit('user-joined', { name: user.name }); // Broadcast to all
+      const onlineUsers = await Users.findAll({
+        where:{
+          isOnline:true
+        }
+      });
+      if (onlineUsers) {
+        io.emit('user-joined', { data: onlineUsers }); // Broadcast to all
       }
     } catch (error) {
       console.log('Error in user-online event:', error);

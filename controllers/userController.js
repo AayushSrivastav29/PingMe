@@ -60,7 +60,7 @@ const addUser = async (req, res) => {
         email,
         phone,
         password: hash,
-        isOnline: true,
+        isOnline: false,
       });
 
       res.status(201).json({

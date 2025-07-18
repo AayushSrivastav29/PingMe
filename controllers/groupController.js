@@ -15,10 +15,9 @@ const addGroup = async (req,res) => {
     }
 }
 
-const findGroup = async (req, res) => {
+const findGroupWhereUserExists = async (req, res) => {
   const { id } = req.params;
-  const userId = parseInt(id);
-
+    const userId = parseInt(id);
   try {
     const allGroups = await Group.findAll();
 
@@ -37,9 +36,21 @@ const findGroup = async (req, res) => {
   }
 };
 
+const findGroup = async (req,res) => {
+    const {groupId} = req.params;
+    try {
+        const group = await Group.findByPk(groupId);
+        res.status(200).send(group);
+    } catch (error) {
+        console.log(error);
+        res.status(404).send(`No group with ${groupId} found`);
+    }
+
+}
 
 
 module.exports={
     addGroup,
+    findGroupWhereUserExists,
     findGroup
 }

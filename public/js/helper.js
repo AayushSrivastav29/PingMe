@@ -34,20 +34,42 @@ async function createGroup(e, homeUserId) {
     console.log(error);
   }
 }
+async function updateOnlineList(groupId) {
+  const ul = document.querySelector("#user-online");
+  ul.innerHTML = "";
+  try {
+    const result = await axios.get(`${path}/api/group/find-group/${groupId}`);
+    console.log(result.data.members);
+    const usersInGroup = result.data.members;
 
-function handleGroupClick(event) {
-  if (event.target.tagName === 'LI' && event.target.dataset.groupId) {
+    onlineUsersArr
+      .filter((u) => usersInGroup.includes(u.id))
+      .forEach((user) => {
+        const li = document.createElement("li");
+        li.className = "online";
+        li.textContent = `${user.name} online`;
+        ul.appendChild(li);
+      });
+  } catch (error) {
+    console.log(error, "err in fetching group");
+  }
+}
+
+async function handleGroupClick(event) {
+  if (event.target.tagName === "LI" && event.target.dataset.groupId) {
     const groupId = event.target.dataset.groupId;
     const groupName = event.target.textContent;
     console.log(groupId, groupName);
     // Show message screen
     document.querySelector("#message-screen").hidden = false;
-    
+
     // Set current group context
     currentGroupId = groupId;
-    
+
     // Update UI to show group name
     document.querySelector("#group-name-header").textContent = groupName;
+
+    updateOnlineList(groupId);
     
     // Load group messages
     loadGroupMessages(groupId);
@@ -59,11 +81,11 @@ async function loadGroupMessages(groupId) {
     const res = await axios.get(`${path}/api/message/group/${groupId}`, {
       headers: { Authorization: token },
     });
-    
+
     // Clear chat messages
     const ul = document.querySelector("#chat-messages");
-    ul.innerHTML = '';
-    
+    ul.innerHTML = "";
+
     // Add messages to UI
     res.data.forEach((msg) => {
       addMessageToUI(msg.User.name, msg.text);

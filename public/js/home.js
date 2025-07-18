@@ -3,6 +3,8 @@ let path = "http://localhost:3000";
 let username;
 let userId;
 let currentGroupId = null;
+let socket;
+let onlineUsersArr = [];
 document.addEventListener("DOMContentLoaded", initialize);
 
 async function initialize() {
@@ -14,7 +16,7 @@ async function initialize() {
   userId = localStorage.getItem("userId");
 
   // Setup WebSocket (Socket.io)
-  const socket = io("http://localhost:3000");
+  socket = io("http://localhost:3000");
 
   // Emit user-online event here
   socket.emit("user-online", userId);
@@ -26,15 +28,26 @@ async function initialize() {
     }
   });
 
-  // Listen for new users joining
-  socket.on("user-joined", (data) => {
-    console.log(data);
-    const ul = document.querySelector("#chat-messages");
-    const li = document.createElement("li");
-    li.className = "joined"; // Apply CSS class for notifications
-    li.textContent = `${data.name} joined`;
-    ul.appendChild(li);
+  socket.on("user-joined", (obj) => {
+    console.log("user-joined event received:", obj);
+    const arr= obj.data;
+    onlineUsersArr=arr;
+    console.log(onlineUsersArr);
   });
+
+  // Listen for new users joining
+  // socket.on("user-joined", (obj) => {
+  //   const ul = document.querySelector("#user-online");
+  //   ul.innerHTML = "";
+  //   console.log(obj);
+  //   const arr = obj.data;
+  //   arr.forEach((user) => {
+  //     const li = document.createElement("li");
+  //     li.className = "online"; // Apply CSS class for notifications
+  //     li.textContent = `${user.name} online`;
+  //     ul.appendChild(li);
+  //   });
+  // });
 
   //get online users
   onlineUsersHandler();
