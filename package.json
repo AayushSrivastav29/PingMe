@@ -11,9 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "cron": "^4.3.2",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "fs": "^0.0.1-security",

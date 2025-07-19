@@ -105,6 +105,11 @@ body {
   overflow: hidden;
 }
 
+#edit-group-btn{
+  display: flex;
+  align-items: end;
+  width: 100px;
+}
 /* When shown */
 #message-screen:not([hidden]) {
   display: flex;

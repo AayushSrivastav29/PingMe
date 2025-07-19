@@ -1,3 +1,4 @@
+const ArchivedChats = require("./archivedMsgsModel");
 const Group = require("./groupModel");
 const Messages = require("./messageModel");
 const Users = require("./userModel");
@@ -10,9 +11,12 @@ Messages.belongsTo(Users, { foreignKey: 'senderId' });
 Group.hasMany(Messages,  { foreignKey: 'groupId' });
 Messages.belongsTo(Group,  { foreignKey: 'groupId' });
 
+ArchivedChats.belongsTo(Users, { foreignKey: 'senderId' });
+ArchivedChats.belongsTo(Group, { foreignKey: 'groupId' });
 
 module.exports={
     Users,
     Messages,
-    Group
+    Group,
+    ArchivedChats
 }

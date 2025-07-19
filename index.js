@@ -5,11 +5,12 @@ const cors = require("cors");
 const path = require("path");
 const http = require("http");
 const socketio = require("socket.io");
+const {CronJob} = require('cron');
 
 //import modules
 require("./models");
 const { Users } = require("./models");
-
+const messageController = require('./controllers/messageController');
 
 //import routes
 const userRoute = require("./routes/userRoute");
@@ -52,6 +53,14 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+
+// Run every day at 2:00 AM
+const job = new CronJob('0 2 * * *', () => {
+  messageController.archiveOldMessages()
+    .then(() => console.log('[CRON] Archiving completed'))
+    .catch(err => console.error('[CRON] Archiving failed:', err));
+});
+job.start();
 
 app.use("/api/user", userRoute);
 app.use("/api/message", messageRoute);
