@@ -16,7 +16,7 @@ async function initialize() {
   userId = localStorage.getItem("userId");
 
   // Setup WebSocket (Socket.io)
-  socket = io("http://localhost:3000");
+  socket = io("http://13.203.161.226:4000");
 
   // Emit user-online event here
   socket.emit("user-online", userId);
