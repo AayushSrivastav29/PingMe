@@ -11,6 +11,9 @@ const Messages = sequelize.define('Messages', {
       key: 'id',
     },
   },
+  fileUrl: DataTypes.STRING,
+  fileName: DataTypes.STRING,
+  fileType: DataTypes.STRING
 });
 
 module.exports= Messages;

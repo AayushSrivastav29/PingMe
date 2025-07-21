@@ -1,5 +1,5 @@
 let token;
-let path = "http://localhost:3000";
+let path = "http://13.203.161.226:4000";
 let username;
 let userId;
 let currentGroupId = null;
@@ -127,28 +127,68 @@ async function loadMessages() {
   }
 }
 
-function addMessageToUI(sender, text) {
+function addMessageToUI(sender, text, fileUrl, fileName, fileType) {
   const ul = document.querySelector("#chat-messages");
   const li = document.createElement("li");
-  li.textContent = `${sender}: ${text}`;
+  
+  if (fileUrl) {
+    if (fileType.startsWith('image/')) {
+      li.innerHTML = `${sender}: <img src="${fileUrl}" alt="${fileName}" style="max-width:200px;"/>`;
+    } else {
+      li.innerHTML = `${sender}: <a href="${fileUrl}" download="${fileName}">${fileName}</a>`;
+    }
+  } else {
+    li.textContent = `${sender}: ${text}`;
+  }
+  
   ul.appendChild(li);
 }
+
+// Update socket event handler
+socket.on("new-message", (data) => {
+  if (data.groupId === currentGroupId) {
+    addMessageToUI(
+      data.sender, 
+      data.text, 
+      data.fileUrl, 
+      data.fileName,
+      data.fileType
+    );
+  }
+});
+
+document.querySelector("#attach-button").addEventListener("click", function() {
+  document.querySelector("#file-input").click();
+});
 
 async function sendMessage() {
   const input = document.querySelector("#send-message");
   const text = input.value.trim();
+  const fileInput = document.querySelector("#file-input");
+  const file = fileInput.files[0];
 
-  if (!text || !currentGroupId) return;
+  if ((!text && !file) || !currentGroupId) return;
+
+  const formData = new FormData();
+  formData.append('text', text);
+  formData.append('groupId', currentGroupId);
+  if (file) {
+    formData.append('file', file);
+  }
 
   try {
     await axios.post(
       `${path}/api/message/send`,
-      { text, groupId: currentGroupId },
+      formData,
       {
-        headers: { Authorization: token },
+        headers: { 
+          Authorization: token,
+          'Content-Type': 'multipart/form-data'
+        },
       }
     );
     input.value = "";
+    fileInput.value = ""; // reset file input
   } catch (error) {
     console.log(error);
   }

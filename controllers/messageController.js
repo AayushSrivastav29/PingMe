@@ -2,19 +2,37 @@ const Users = require("../models/userModel");
 const Messages = require("../models/messageModel");
 const { Op } = require("sequelize");
 const ArchivedChats = require("../models/archivedMsgsModel");
+const { uploadFile } = require("../utils/s3Upload");
 
 const sendMessage = async (req, res) => {
   try {
     const { text, groupId } = req.body;
     const senderId = req.user.id;
-    const message = await Messages.create({ text, senderId, groupId });
 
-    // Emit real-time event with groupId
+    let fileData = null;
+    if (req.file) {
+      const result = await uploadFile(req.file);
+      fileData = {
+        fileUrl: result.Location,
+        fileName: req.file.originalname,
+        fileType: req.file.mimetype,
+      };
+    }
+
+    const message = await Messages.create({
+      text,
+      senderId,
+      groupId,
+      ...fileData,
+    });
+
+    // Emit real-time event with file data
     if (req.app.get("socketio")) {
       req.app.get("socketio").emit("new-message", {
         text,
         sender: req.user.name,
         groupId,
+        ...fileData, // Include file data in socket event
       });
     }
 
