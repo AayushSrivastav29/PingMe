@@ -21,17 +21,23 @@ async function initialize() {
   // Emit user-online event here
   socket.emit("user-online", userId);
 
-  // Listen for new messages
+  // Updated socket event handler
   socket.on("new-message", (data) => {
     if (data.groupId === currentGroupId) {
-      addMessageToUI(data.sender, data.text);
+      addMessageToUI(
+        data.sender,
+        data.text,
+        data.fileUrl,
+        data.fileName,
+        data.fileType
+      );
     }
   });
 
   socket.on("user-joined", (obj) => {
     console.log("user-joined event received:", obj);
-    const arr= obj.data;
-    onlineUsersArr=arr;
+    const arr = obj.data;
+    onlineUsersArr = arr;
     console.log(onlineUsersArr);
   });
 
@@ -64,7 +70,9 @@ async function initialize() {
   document
     .querySelector("#dashboard")
     .addEventListener("click", handleGroupClick);
-  document.querySelector("#edit-group-btn").addEventListener("click", openAdminModal);
+  document
+    .querySelector("#edit-group-btn")
+    .addEventListener("click", openAdminModal);
 }
 
 function showDashboard() {
@@ -130,9 +138,9 @@ async function loadMessages() {
 function addMessageToUI(sender, text, fileUrl, fileName, fileType) {
   const ul = document.querySelector("#chat-messages");
   const li = document.createElement("li");
-  
+
   if (fileUrl) {
-    if (fileType.startsWith('image/')) {
+    if (fileType.startsWith("image/")) {
       li.innerHTML = `${sender}: <img src="${fileUrl}" alt="${fileName}" style="max-width:200px;"/>`;
     } else {
       li.innerHTML = `${sender}: <a href="${fileUrl}" download="${fileName}">${fileName}</a>`;
@@ -140,24 +148,11 @@ function addMessageToUI(sender, text, fileUrl, fileName, fileType) {
   } else {
     li.textContent = `${sender}: ${text}`;
   }
-  
+
   ul.appendChild(li);
 }
 
-// Update socket event handler
-socket.on("new-message", (data) => {
-  if (data.groupId === currentGroupId) {
-    addMessageToUI(
-      data.sender, 
-      data.text, 
-      data.fileUrl, 
-      data.fileName,
-      data.fileType
-    );
-  }
-});
-
-document.querySelector("#attach-button").addEventListener("click", function() {
+document.querySelector("#attach-button").addEventListener("click", function () {
   document.querySelector("#file-input").click();
 });
 
@@ -170,23 +165,19 @@ async function sendMessage() {
   if ((!text && !file) || !currentGroupId) return;
 
   const formData = new FormData();
-  formData.append('text', text);
-  formData.append('groupId', currentGroupId);
+  formData.append("text", text);
+  formData.append("groupId", currentGroupId);
   if (file) {
-    formData.append('file', file);
+    formData.append("file", file);
   }
 
   try {
-    await axios.post(
-      `${path}/api/message/send`,
-      formData,
-      {
-        headers: { 
-          Authorization: token,
-          'Content-Type': 'multipart/form-data'
-        },
-      }
-    );
+    await axios.post(`${path}/api/message/send`, formData, {
+      headers: {
+        Authorization: token,
+        "Content-Type": "multipart/form-data",
+      },
+    });
     input.value = "";
     fileInput.value = ""; // reset file input
   } catch (error) {
