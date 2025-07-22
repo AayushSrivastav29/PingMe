@@ -1,10 +1,10 @@
 const { Sequelize } = require("sequelize");
-require('dotenv').config();
+// require('dotenv').config();
 
 
 
 const sequelize = new Sequelize(process.env.SCHEMA_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
-    host: process.env.RDS_ENDPOINT,
+  host: process.env.RDS_ENDPOINT,
   dialect:
     "mysql" /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */,
 });

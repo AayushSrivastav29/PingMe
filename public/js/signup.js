@@ -1,4 +1,4 @@
-let path = "http://13.203.161.226:4000";
+let path = "http://13.203.161.226";
 
 document.querySelector("form").addEventListener("submit", handleFormSubmit);
 

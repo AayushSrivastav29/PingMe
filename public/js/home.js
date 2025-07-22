@@ -1,5 +1,5 @@
 let token;
-let path = "http://13.203.161.226:4000";
+let path = "http://13.203.161.226";
 let username;
 let userId;
 let currentGroupId = null;
@@ -16,7 +16,7 @@ async function initialize() {
   userId = localStorage.getItem("userId");
 
   // Setup WebSocket (Socket.io)
-  socket = io("http://13.203.161.226:4000");
+  socket = io(`${path}`);
 
   // Emit user-online event here
   socket.emit("user-online", userId);
@@ -55,13 +55,22 @@ async function initialize() {
     ul.appendChild(li);
   });
 
-  //show groups
   await showGroups();
 
-  //show contacts
   showContacts();
 
-  // Send message on button click
+  // Get filename and display it in message input
+  const fileInput = document.querySelector("#file-input");
+  const messageInput = document.querySelector("#send-message");
+
+  fileInput.addEventListener("change", function () {
+    if (this.files.length > 0) {
+      const fileName = this.files[0].name;
+      messageInput.value = fileName;
+
+    }
+  });
+
   document.querySelector("#send-button").addEventListener("click", sendMessage);
   document
     .querySelector("#create-group-btn")
@@ -128,7 +137,13 @@ async function loadMessages() {
     });
     console.log(res);
     res.data.forEach((msg) => {
-      addMessageToUI(msg.User.name, msg.text);
+      addMessageToUI(
+        msg.User.name,
+        msg.text,
+        msg.fileUrl,
+        msg.fileName,
+        msg.fileType
+      );
     });
   } catch (error) {
     console.log(error);
@@ -141,9 +156,9 @@ function addMessageToUI(sender, text, fileUrl, fileName, fileType) {
 
   if (fileUrl) {
     if (fileType.startsWith("image/")) {
-      li.innerHTML = `${sender}: <img src="${fileUrl}" alt="${fileName}" style="max-width:200px;"/>`;
+      li.innerHTML = `${sender}: <img src="${fileUrl}" alt="${fileName}" target="_blank" style="max-width:200px;"/>`;
     } else {
-      li.innerHTML = `${sender}: <a href="${fileUrl}" download="${fileName}">${fileName}</a>`;
+      li.innerHTML = `${sender}: <a href="${fileUrl}" target="_blank" download="${fileName}">${fileName}</a>`;
     }
   } else {
     li.textContent = `${sender}: ${text}`;

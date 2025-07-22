@@ -110,7 +110,13 @@ async function loadGroupMessages(groupId) {
 
     // Add messages to UI
     res.data.forEach((msg) => {
-      addMessageToUI(msg.User.name, msg.text);
+      addMessageToUI(
+        msg.User.name,
+        msg.text,
+        msg.fileUrl,
+        msg.fileName,
+        msg.fileType
+      );
     });
   } catch (error) {
     console.log(error);
@@ -201,7 +207,7 @@ async function openAdminModal() {
 // Admin actions
 async function removeMember(event) {
   let userId = event.target.dataset.id;
-    userId = parseInt(userId);
+  userId = parseInt(userId);
 
   try {
     await axios.post(
@@ -223,7 +229,7 @@ async function removeMember(event) {
 
 async function makeAdmin(event) {
   let userId = event.target.dataset.id;
-    userId = parseInt(userId);
+  userId = parseInt(userId);
   try {
     await axios.post(
       `${path}/api/group/make-admin`,
@@ -244,7 +250,7 @@ async function makeAdmin(event) {
 
 async function removeAdmin(event) {
   let userId = event.target.dataset.id;
-    userId = parseInt(userId);
+  userId = parseInt(userId);
 
   try {
     await axios.post(
@@ -267,7 +273,7 @@ async function removeAdmin(event) {
 async function addMember() {
   const select = document.querySelector("#add-member-select");
   let userId = select.value;
-    userId= parseInt(userId);
+  userId = parseInt(userId);
   if (!userId) return;
 
   try {

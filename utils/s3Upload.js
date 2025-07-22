@@ -1,6 +1,5 @@
 const AWS = require('aws-sdk');
-const { Sequelize, DataTypes } = require('sequelize');
-
+const { v4: uuidv4 } = require('uuid'); 
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.IAM_USER_KEY,
@@ -10,7 +9,7 @@ const s3 = new AWS.S3({
 exports.uploadFile = (file) => {
   const params = {
     Bucket: process.env.BUCKET_NAME,
-    Key: `${DataTypes.UUIDV4}-${file.originalname}`,
+    Key: `${uuidv4()}-${file.originalname}`,
     Body: file.buffer,
     ContentType: file.mimetype,
     ACL: 'public-read'
