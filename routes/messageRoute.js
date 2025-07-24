@@ -2,7 +2,7 @@ const messageController = require('../controllers/messageController');
 const express = require('express');
 const auth = require('../middlewares/auth');
 const router = express.Router();
-const multer = require('multer-s3');
+const multer = require('multer');
 const upload = multer();
 
 router.post('/send', auth, upload.single('file'), messageController.sendMessage);

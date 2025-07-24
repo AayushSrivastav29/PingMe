@@ -1,4 +1,5 @@
 const  Group  = require("../models/groupModel");
+const Users = require("../models/userModel");
 
 const addGroup = async (req, res) => {
   try {
@@ -100,10 +101,11 @@ const removeMember = async (req, res) => {
       members: updatedMembers,
       admin: updatedAdmins
     });
-    
+
+    const user = await Users.findByPk(userId);
     // Broadcast user-left event
     if (req.app.get("socketio")) {
-      req.app.get("socketio").emit("user-left", { name: req.user.name });
+      req.app.get("socketio").emit("user-left", { name: user.name });
     }
     res.status(200).json({ message: 'Member removed successfully' });
   } catch (error) {
