@@ -87,11 +87,6 @@ const removeMember = async (req, res) => {
     if (!group.admin.includes(req.user.id)) {
       return res.status(403).json({ error: 'Only admins can remove members' });
     }
-
-    if (group.admin.length === 1) {
-      return res.status(400).json({ error: 'Cannot remove the only admin' });
-    }
-    
     // Remove member
     const updatedMembers = group.members.filter(id => id !== userId);
     
@@ -106,6 +101,10 @@ const removeMember = async (req, res) => {
       admin: updatedAdmins
     });
     
+    // Broadcast user-left event
+    if (req.app.get("socketio")) {
+      req.app.get("socketio").emit("user-left", { name: req.user.name });
+    }
     res.status(200).json({ message: 'Member removed successfully' });
   } catch (error) {
     console.log(error);
@@ -153,6 +152,11 @@ const removeAdmin = async (req, res) => {
     // Remove from admins
     const updatedAdmins = group.admin.filter(id => id !== userId);
     await group.update({ admin: updatedAdmins });
+
+    // Broadcast user-left event
+    if (req.app.get("socketio")) {
+      req.app.get("socketio").emit("user-left", { name: req.user.name });
+    }
     
     res.status(200).json({ message: 'Admin status removed successfully' });
   } catch (error) {

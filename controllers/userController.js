@@ -23,10 +23,6 @@ const logoutUser = async (req, res) => {
     const id = req.user.id;
     const user = await Users.findByPk(id);
     await user.update({ isOnline: false });
-    // Broadcast user-left event
-    if (req.app.get("socketio")) {
-      req.app.get("socketio").emit("user-left", { name: user.name });
-    }
 
     res.status(200).json({ message: "user logged out", success: true });
   } catch (error) {
