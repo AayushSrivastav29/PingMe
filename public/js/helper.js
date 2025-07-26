@@ -62,8 +62,30 @@ async function updateOnlineList(groupId) {
   }
 }
 
-async function handleGroupClick(event) {
+async function updateOnlineUsersList() {
+  const ul = document.querySelector("#user-online");
+    ul.innerHTML = "";
+    try {
+      const onlineUsers = await axios.get(`${path}/api/user/online`);
+      const onlineUsersList = onlineUsers.data;
+      onlineUsersList
+        .filter((u) => u.id === Number(currentReceiverId))
+        .forEach((user) => {
+          const li = document.createElement("li");
+          li.className = "online";
+          li.textContent = `${user.name} online`;
+          li.style.color = "green";
+          ul.appendChild(li);
+        });
+    } catch (error) {
+      console.log(error, "err in fetching group");
+    }
+}
+
+async function handleDashboardClick(event) {
   if (event.target.tagName === "LI" && event.target.dataset.groupId) {
+    //remove currentReceiverId
+    currentReceiverId = null;
     const groupId = event.target.dataset.groupId;
     const groupName = event.target.textContent;
     console.log(groupId, groupName);
@@ -95,6 +117,27 @@ async function handleGroupClick(event) {
 
     // Load group messages
     loadGroupMessages(groupId);
+
+  }
+  //handle Contact click
+  if (event.target.tagName === "LI" && event.target.dataset.receiverId) {
+    currentGroupId = null;
+    const receiverId = event.target.dataset.receiverId;
+    const contactName = event.target.textContent;
+    console.log(receiverId, contactName);
+
+    // Show message screen
+    document.querySelector("#message-screen").hidden = false;
+
+    currentReceiverId = receiverId;
+
+    document.querySelector("#group-name-header").textContent = contactName;
+
+    //check receiver is online
+    updateOnlineUsersList();
+
+    // Load group messages
+    loadPersonalMessages(receiverId);
   }
 }
 
@@ -104,6 +147,30 @@ async function loadGroupMessages(groupId) {
       headers: { Authorization: token },
     });
 
+    // Clear chat messages
+    const ul = document.querySelector("#chat-messages");
+    ul.innerHTML = "";
+
+    // Add messages to UI
+    res.data.forEach((msg) => {
+      addMessageToUI(
+        msg.User.name,
+        msg.text,
+        msg.fileUrl,
+        msg.fileName,
+        msg.fileType
+      );
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function loadPersonalMessages(receiverId) {
+  try {
+    const res = await axios.get(`${path}/api/pers-message/get/${receiverId}`, {
+      headers: { Authorization: token },
+    });
     // Clear chat messages
     const ul = document.querySelector("#chat-messages");
     ul.innerHTML = "";
@@ -206,15 +273,15 @@ async function openAdminModal() {
 
 // Admin actions
 async function removeMember(event) {
-  let userId = event.target.dataset.id;
-  userId = parseInt(userId);
+  let memberId = event.target.dataset.id;
+  memberId = parseInt(memberId);
 
   try {
     await axios.post(
       `${path}/api/group/remove-member`,
       {
         groupId: currentGroupId,
-        userId,
+        memberId,
       },
       {
         headers: { Authorization: token },

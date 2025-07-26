@@ -1,8 +1,8 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../utils/db-connection");
 
-const ArchivedChats = sequelize.define(
-  "ArchivedChats",
+const ArchivedPersonalChats = sequelize.define(
+  "ArchivedPersonalChats",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -21,13 +21,9 @@ const ArchivedChats = sequelize.define(
         key: "id",
       },
     },
-    groupId: {
+    receiverId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: "Groups",
-        key: "id",
-      },
+      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -42,4 +38,4 @@ const ArchivedChats = sequelize.define(
   }
 );
 
-module.exports = ArchivedChats;
+module.exports = ArchivedPersonalChats;

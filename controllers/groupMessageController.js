@@ -112,7 +112,7 @@ async function archiveOldMessages() {
 
     if (oldMessages.length > 0) {
       await ArchivedChats.bulkCreate(oldMessages, {
-        fields: ["text", "senderId", "groupId", "createdAt"],
+        fields: ["text", "senderId", "groupId", "createdAt", "fileUrl", "fileName" , "fileType"],
         validate: true,
       });
 

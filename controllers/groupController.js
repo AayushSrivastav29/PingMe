@@ -81,20 +81,25 @@ const addMember = async (req, res) => {
 // Remove member from group (admin only)
 const removeMember = async (req, res) => {
   try {
-    const { groupId, userId } = req.body;
+    const { groupId, memberId } = req.body;
     const group = await Group.findByPk(groupId);
     
     // Check if requester is admin
     if (!group.admin.includes(req.user.id)) {
       return res.status(403).json({ error: 'Only admins can remove members' });
     }
+
+    // Prevent removing last admin
+    if (group.admin.length === 1 && group.admin.includes(memberId)) {
+      return res.status(400).json({ error: 'Cannot remove the only admin' });
+    }
     // Remove member
-    const updatedMembers = group.members.filter(id => id !== userId);
+    const updatedMembers = group.members.filter(id => id !== memberId);
     
     // Remove from admins if they were admin
     let updatedAdmins = group.admin;
-    if (updatedAdmins.includes(userId)) {
-      updatedAdmins = updatedAdmins.filter(id => id !== userId);
+    if (updatedAdmins.includes(memberId)) {
+      updatedAdmins = updatedAdmins.filter(id => id !== memberId);
     }
     
     await group.update({ 
@@ -102,10 +107,10 @@ const removeMember = async (req, res) => {
       admin: updatedAdmins
     });
 
-    const user = await Users.findByPk(userId);
+    const user = await Users.findByPk(memberId);
     // Broadcast user-left event
     if (req.app.get("socketio")) {
-      req.app.get("socketio").emit("user-left", { name: user.name });
+      req.app.get("socketio").emit("user-removed", { name: user.name });
     }
     res.status(200).json({ message: 'Member removed successfully' });
   } catch (error) {
@@ -155,9 +160,9 @@ const removeAdmin = async (req, res) => {
     const updatedAdmins = group.admin.filter(id => id !== userId);
     await group.update({ admin: updatedAdmins });
 
-    // Broadcast user-left event
+    // Broadcast user-removed event
     if (req.app.get("socketio")) {
-      req.app.get("socketio").emit("user-left", { name: req.user.name });
+      req.app.get("socketio").emit("user-removed", { name: req.user.name });
     }
     
     res.status(200).json({ message: 'Admin status removed successfully' });

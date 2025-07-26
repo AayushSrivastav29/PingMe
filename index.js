@@ -16,7 +16,7 @@ const messageController = require('./controllers/messageController');
 const userRoute = require("./routes/userRoute");
 const messageRoute = require("./routes/messageRoute");
 const groupRoute = require("./routes/groupRoute");
-
+const personalMsgRoute = require('./routes/personalMsgRoute');
 
 const app = express();
 app.use(cors());
@@ -65,6 +65,7 @@ job.start();
 app.use("/api/user", userRoute);
 app.use("/api/message", messageRoute);
 app.use("/api/group", groupRoute);
+app.use('/api/pers-message', personalMsgRoute);
 
 
 app.get("/", (req, res) => {

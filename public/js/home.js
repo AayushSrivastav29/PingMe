@@ -1,8 +1,9 @@
 let token;
-let path = "http://13.203.161.226";
+let path = "http://localhost:4000";
 let username;
 let userId;
 let currentGroupId = null;
+let currentReceiverId = null;
 let socket;
 let onlineUsersArr = [];
 document.addEventListener("DOMContentLoaded", initialize);
@@ -34,26 +35,58 @@ async function initialize() {
     }
   });
 
-  socket.on("user-joined", (obj) => {
-    console.log("user-joined event received:", obj);
-    const arr = obj.data;
-    onlineUsersArr = arr;
-    console.log(onlineUsersArr);
+  socket.on("new-pers-message", (data) => {
+    // Check if message is relevant to current chat
+    if (
+      data.senderId == currentReceiverId ||
+      (data.receiverId == currentReceiverId && data.senderId == userId)
+    ) {
+      addMessageToUI(
+        data.sender,
+        data.text,
+        data.fileUrl,
+        data.fileName,
+        data.fileType
+      );
+    }
   });
 
-  //get online users
-  onlineUsersHandler();
+
+  socket.on("user-joined", (obj) => {
+    onlineUsersArr=[];
+    const arr = obj.data;
+    arr.forEach((ele)=>onlineUsersArr.push(ele));
+    if (currentGroupId) {
+      updateOnlineList(currentGroupId);
+    }
+  });
 
   // Load messages on page load
   loadMessages();
 
-  socket.on("user-left", (data) => {
+  socket.on("user-removed", (data) => {
+    onlineUsersArr = onlineUsersArr.filter((u) => u.id !== data.id);
+    if (currentGroupId) {
+      updateOnlineList(currentGroupId);
+    }
+    //leave notification
     const ul = document.querySelector("#chat-messages");
     const li = document.createElement("li");
     li.className = "left";
     li.textContent = `${data.name} left`;
     ul.appendChild(li);
   });
+
+   socket.on("user-left", (userId) => {
+      console.log("user-left",userId);
+      onlineUsersArr = onlineUsersArr.filter((u) => u.id !== userId);
+      console.log("onlineUsersArr",onlineUsersArr);
+    if (currentGroupId) {
+      console.log(currentGroupId);
+      updateOnlineList(currentGroupId);
+      updateOnlineUsersList();
+    }
+  })
 
   await showGroups();
 
@@ -67,7 +100,6 @@ async function initialize() {
     if (this.files.length > 0) {
       const fileName = this.files[0].name;
       messageInput.value = fileName;
-
     }
   });
 
@@ -78,10 +110,12 @@ async function initialize() {
 
   document
     .querySelector("#dashboard")
-    .addEventListener("click", handleGroupClick);
+    .addEventListener("click", handleDashboardClick);
   document
     .querySelector("#edit-group-btn")
     .addEventListener("click", openAdminModal);
+  document.querySelector("#logout").addEventListener("click", logoutHandler);
+
 }
 
 function showDashboard() {
@@ -119,6 +153,7 @@ async function showContacts() {
       if (ele.name != username) {
         const li = document.createElement("li");
         li.textContent = `${ele.name}`;
+        li.dataset.receiverId = ele.id;
         ul.appendChild(li);
       }
     });
@@ -177,22 +212,35 @@ async function sendMessage() {
   const fileInput = document.querySelector("#file-input");
   const file = fileInput.files[0];
 
-  if ((!text && !file) || !currentGroupId) return;
+  if (!text && !file && !currentGroupId && !currentReceiverId) {
+    console.log("checking ", currentGroupId, currentReceiverId, text, file);
+    return;
+  }
 
   const formData = new FormData();
   formData.append("text", text);
   formData.append("groupId", currentGroupId);
+  formData.append("receiverId", currentReceiverId);
+
   if (file) {
     formData.append("file", file);
   }
-
   try {
-    await axios.post(`${path}/api/message/send`, formData, {
-      headers: {
-        Authorization: token,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    if (currentReceiverId) {
+      await axios.post(`${path}/api/pers-message/send`, formData, {
+        headers: {
+          Authorization: token,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    } else {
+      await axios.post(`${path}/api/message/send`, formData, {
+        headers: {
+          Authorization: token,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    }
     input.value = "";
     fileInput.value = ""; // reset file input
   } catch (error) {
@@ -201,7 +249,7 @@ async function sendMessage() {
 }
 
 //logout feature
-document.querySelector("#logout").addEventListener("click", async () => {
+async function logoutHandler() {
   try {
     const res = await axios.get(`${path}/api/user/logout`, {
       headers: { Authorization: token },
@@ -209,34 +257,9 @@ document.querySelector("#logout").addEventListener("click", async () => {
     console.log(res.data.message);
     localStorage.removeItem("token");
     localStorage.removeItem("name");
+
     localStorage.removeItem("userId"); // Add this
-    window.location.href = "/view/login.html";
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-async function onlineUsersHandler() {
-  try {
-    const ul = document.querySelector("#chat-messages");
-    const onlineUsers = await axios.get(`${path}/api/user/online`);
-    const onlineUsersList = onlineUsers.data;
-
-    // Add current user
-    const youLi = document.createElement("li");
-    youLi.className = "joined";
-    youLi.textContent = "You joined";
-    ul.appendChild(youLi);
-
-    // Add other users
-    onlineUsersList.forEach((user) => {
-      if (user.name !== username) {
-        const li = document.createElement("li");
-        li.className = "joined";
-        li.textContent = `${user.name} joined`;
-        ul.appendChild(li);
-      }
-    });
+   window.location.href = "/view/login.html";
   } catch (error) {
     console.log(error);
   }
